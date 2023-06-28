@@ -1,4 +1,4 @@
-import { Options as SearchOptions } from 'file-text-search/types'
+import { Result, Options as SearchOptions } from 'file-text-search/types'
 import { search } from 'file-text-search'
 import tinyfy from 'tinify'
 
@@ -13,17 +13,15 @@ async function run(options: Options) {
   tinyfy.key = options.tinypngKey
   await Promise.all(urls.map(async url => {
     const source = tinyfy.fromUrl(url)
-    const [ buffer, meta ] = await Promise.all([
+    const [ buffer, compressedSize, rawSize ] = await Promise.all([
       await source.toBuffer(),
-      fetchImgMeta(url)
+      source.result().size(),
+      fetchImgMeta(url).then(meta => meta.fileSize)
     ])
-    // todo: check compress size
-    const result = source.result().size
-    console.log('result', result)
-    const compressSize = 0.2
-    const shouldReplace = compressSize > options.minCompressRatio
+    const shouldReplace = (compressedSize / rawSize ) > options.minCompressRatio
     if(shouldReplace) {
-      await uploadImg(buffer)
+      const compressedUrl = await uploadImg(buffer)
+      await writeBack(compressedUrl, {} as any)
     }
   }))
 }
@@ -38,8 +36,12 @@ async function fetchImgMeta(url: string) {
 
 async function uploadImg(buffer: Uint8Array) {
   // todo: upload img
+  return ''
 }
 
+async function writeBack(newUrl: string, result: Result) {
+  // todo: write back
+}
 
 interface Options extends SearchOptions {
   tinypngKey: string
