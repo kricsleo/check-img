@@ -9,6 +9,7 @@ const fileSeachOptions: SearchOptions = {
 
 interface Options extends SearchOptions {
   tinypngKey: string
+  minCompressRatio: number
 }
 
 async function run(options: Options) {
@@ -17,9 +18,18 @@ async function run(options: Options) {
   tinyfy.key = options.tinypngKey
   await Promise.all(urls.map(async url => {
     const source = tinyfy.fromUrl(url)
-    // todo: generate img name to write img
-    await source.toFile(Math.random() + '.png')
+    const buffer = await source.toBuffer()
     // todo: check compress size
-    // todo: upload img after tinyfied
+    const result = source.result()
+    console.log('result', result)
+    const compressSize = 0.2
+    const shouldReplace = compressSize > options.minCompressRatio
+    if(shouldReplace) {
+      await uploadImg(buffer)
+    }
   }))
+}
+
+async function uploadImg(buffer: Uint8Array) {
+  // todo: upload img
 }
