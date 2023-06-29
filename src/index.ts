@@ -2,14 +2,19 @@ import { Match, Options as SearchOptions } from 'file-text-search/types'
 import { search } from 'file-text-search'
 import tinyfy from 'tinify'
 import fs from 'fs/promises'
+import fetch from 'node-fetch'
 
-const fileSeachOptions: SearchOptions = {
-  include: [],
-  search: [/https:\/\/.*(?=('|"))/]
+const options: Options = {
+  include: ['**/*.(js|ts|vue)'],
+  search: [/https:\/\/\webstatic.*\/upload.*(?=('|"))/],
+  tinypngKey: '',
+  minCompressRatio: 0.2
 }
 
+// run(options)
+
 async function run(options: Options) {
-  const matches = await search(fileSeachOptions)
+  const matches = await search(options)
   tinyfy.key = options.tinypngKey
   const optimizedCache: Record<string, string> = {}
   const writeCache: Record<string, OptimizedMatch[]> = {}
@@ -18,12 +23,18 @@ async function run(options: Options) {
       writeCache[match.file] ||= []
       writeCache[match.file].push({ ...match, optimized: optimizedCache[match.match] })
     } else {
-      const source = tinyfy.fromUrl(match.match)
-      const [ buffer, compressedSize, rawSize ] = await Promise.all([
-        await source.toBuffer(),
-        source.result().size(),
-        fetchImgMeta(match.match).then(meta => meta.fileSize)
-      ])
+      // const source = tinyfy.fromUrl(match.match)
+      // const [ buffer, compressedSize, rawSize ] = await Promise.all([
+      //   await source.toBuffer(),
+      //   source.result().size(),
+      //   fetchImgMeta(match.match).then(meta => meta.fileSize)
+      // ])
+
+      // const rawSize = await fetchImgMeta(match.match).then(meta => meta.fileSize)
+      const rawSize = 1000 
+      const compressedSize = rawSize * 0.7
+      const buffer = new Uint8Array()
+
       const shouldOptimize = (compressedSize / rawSize ) > options.minCompressRatio
       if(shouldOptimize) {
         const optimized = await uploadImg(buffer)
@@ -37,21 +48,21 @@ async function run(options: Options) {
     const content = await fs.readFile(file, 'utf-8')
     const optimizedContent = optimizeContent(content, matches)
     // todo: check diff before write
-    // await fs.writeFile(file, optimizedContent)
+    await fs.writeFile(file, optimizedContent)
   }))
 }
 
 async function fetchImgMeta(url: string) {
   // https://help.aliyun.com/document_detail/44975.html?spm=a2c4g.44688.0.0.61a54b9bBlH4JX
   const metaUrl = url + '?x-oss-process=image/info'
-  const aliyunMeta: AliyunImgMeta = await (await fetch(metaUrl)).json()
+  const aliyunMeta = await (await fetch(metaUrl)).json() as AliyunImgMeta
   const meta = { fileSize: Number(aliyunMeta.FileSize.value) }
   return meta
 }
 
 async function uploadImg(buffer: Uint8Array) {
   // todo: upload img
-  return ''
+  return 'https://kricsleo.img'
 }
 
 function optimizeContent(content: string, matches: OptimizedMatch[]) {
@@ -59,13 +70,11 @@ function optimizeContent(content: string, matches: OptimizedMatch[]) {
   const newContent = sortedMatches.reduce((acc, cur, idx, arr) => {
     if(idx === 0) {
       acc += content.slice(0, cur.start) + cur.optimized
-    } else if(idx === arr.length - 1) {
-      acc += content.slice(cur.end + 1, content.length - 1) + + cur.optimized
     } else {
-      acc += cur.optimized + content.slice(arr[idx - 1].end + 1, cur.start)
+      acc += content.slice(arr[idx - 1].end, cur.start) + cur.optimized
     }
     return acc
-  }, '')
+  }, '') + content.slice(sortedMatches[sortedMatches.length - 1].end)
   return newContent
 }
 
