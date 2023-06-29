@@ -7,7 +7,7 @@ interface AliyunImgMeta {
   FileSize: { value: string }
 }
 
-const fetchImgSize: Options['fetchImgSize'] = async (url: string) => {
+export const fetchImgSize: Options['fetchImgSize'] = async (url: string) => {
   const metaUrl = url + '?x-oss-process=image/info'
   const aliyunMeta = await (await fetch(metaUrl)).json() as AliyunImgMeta
   return Number(aliyunMeta.FileSize.value)
