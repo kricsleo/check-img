@@ -6,8 +6,14 @@ settings:
 
 dependencies:
   file-text-search:
-    specifier: ^0.0.2
-    version: 0.0.2
+    specifier: ^0.0.3
+    version: 0.0.3
+  lodash-es:
+    specifier: ^4.17.21
+    version: 4.17.21
+  lodash.uniqby:
+    specifier: ^4.7.0
+    version: 4.7.0
   tinify:
     specifier: ^1.7.1
     version: 1.7.1
@@ -1312,8 +1318,8 @@ packages:
     dependencies:
       reusify: 1.0.4
 
-  /file-text-search@0.0.2:
-    resolution: {integrity: sha512-OeEYrECVqISlEUgI10SSQB1eLhhNoy81dHqz4UDrTWKWj7lAhKxmA3cWy8fJTS7iwLSduMbXPva7QxS7hedLkA==}
+  /file-text-search@0.0.3:
+    resolution: {integrity: sha512-LybjzOfVNO+DMgals6Yn9UmF4mywNuQ2og9q/ji3bBputXaPkLrrcczNHhb/wzzHlP000FXhX/JyWBAmIx1z6w==}
     dependencies:
       fast-glob: 3.2.12
       tinypool: 0.5.0
@@ -1565,6 +1571,14 @@ packages:
     resolution: {integrity: sha512-SFppqq5p42fe2qcZQqqEOiVRXl+WCP1MdT6k7BDEW1j++sp5fIY+/fdRQitvKgB5BrBcmrs5m/L0v2FrU5MY1g==}
     engines: {node: '>=14'}
     dev: true
+
+  /lodash-es@4.17.21:
+    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
+    dev: false
+
+  /lodash.uniqby@4.7.0:
+    resolution: {integrity: sha512-e/zcLx6CSbmaEgFHCA7BnoQKyCtKMxnuWrJygbwPs/AIn+IMKl66L8/s+wBUn5LRw2pZx3bUHibiV1b6aTWIww==}
+    dev: false
 
   /lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}

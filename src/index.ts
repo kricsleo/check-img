@@ -1,6 +1,7 @@
-import { Result, Options as SearchOptions } from 'file-text-search/types'
+import { Match, Options as SearchOptions } from 'file-text-search/types'
 import { search } from 'file-text-search'
 import tinyfy from 'tinify'
+import fs from 'fs/promises'
 
 const fileSeachOptions: SearchOptions = {
   include: [],
@@ -9,20 +10,34 @@ const fileSeachOptions: SearchOptions = {
 
 async function run(options: Options) {
   const matches = await search(fileSeachOptions)
-  const urls = Array.from(new Set(matches.map(t => t.matches.map(k => k.match)).flat()))
   tinyfy.key = options.tinypngKey
-  await Promise.all(urls.map(async url => {
-    const source = tinyfy.fromUrl(url)
-    const [ buffer, compressedSize, rawSize ] = await Promise.all([
-      await source.toBuffer(),
-      source.result().size(),
-      fetchImgMeta(url).then(meta => meta.fileSize)
-    ])
-    const shouldReplace = (compressedSize / rawSize ) > options.minCompressRatio
-    if(shouldReplace) {
-      const compressedUrl = await uploadImg(buffer)
-      await writeBack(compressedUrl, {} as any)
+  const optimizedCache: Record<string, string> = {}
+  const writeCache: Record<string, OptimizedMatch[]> = {}
+  await Promise.all(matches.map(async match => {
+    if(optimizedCache[match.match]) {
+      writeCache[match.file] ||= []
+      writeCache[match.file].push({ ...match, optimized: optimizedCache[match.match] })
+    } else {
+      const source = tinyfy.fromUrl(match.match)
+      const [ buffer, compressedSize, rawSize ] = await Promise.all([
+        await source.toBuffer(),
+        source.result().size(),
+        fetchImgMeta(match.match).then(meta => meta.fileSize)
+      ])
+      const shouldOptimize = (compressedSize / rawSize ) > options.minCompressRatio
+      if(shouldOptimize) {
+        const optimized = await uploadImg(buffer)
+        optimizedCache[match.match] = optimized
+        writeCache[match.file] ||= []
+        writeCache[match.file].push({ ...match, optimized: optimizedCache[match.match] })
+      }
     }
+  }))
+  await Promise.all(Object.entries(writeCache).map(async ([file, matches]) => {
+    const content = await fs.readFile(file, 'utf-8')
+    const optimizedContent = optimizeContent(content, matches)
+    // todo: check diff before write
+    // await fs.writeFile(file, optimizedContent)
   }))
 }
 
@@ -39,8 +54,19 @@ async function uploadImg(buffer: Uint8Array) {
   return ''
 }
 
-async function writeBack(newUrl: string, result: Result) {
-  // todo: write back
+function optimizeContent(content: string, matches: OptimizedMatch[]) {
+  const sortedMatches = matches.sort((a, b) => a.start - b.start).flat()
+  const newContent = sortedMatches.reduce((acc, cur, idx, arr) => {
+    if(idx === 0) {
+      acc += content.slice(0, cur.start) + cur.optimized
+    } else if(idx === arr.length - 1) {
+      acc += content.slice(cur.end + 1, content.length - 1) + + cur.optimized
+    } else {
+      acc += cur.optimized + content.slice(arr[idx - 1].end + 1, cur.start)
+    }
+    return acc
+  }, '')
+  return newContent
 }
 
 interface Options extends SearchOptions {
@@ -51,4 +77,8 @@ interface Options extends SearchOptions {
 // https://image-demo.oss-cn-hangzhou.aliyuncs.com/example.jpg?x-oss-process=image/info
 interface AliyunImgMeta {
   FileSize: { value: string }
+}
+
+interface OptimizedMatch extends Match {
+  optimized: string
 }

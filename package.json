@@ -55,7 +55,9 @@
     "vitest": "^0.32.2"
   },
   "dependencies": {
-    "file-text-search": "^0.0.2",
+    "file-text-search": "^0.0.3",
+    "lodash-es": "^4.17.21",
+    "lodash.uniqby": "^4.7.0",
     "tinify": "^1.7.1"
   }
 }
