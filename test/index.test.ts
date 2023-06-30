@@ -7,8 +7,8 @@ import { upload } from '../src/adapter/upload'
 import { fetchImgSize } from '../src/adapter/aliyun'
 
 const options: Options = {
-  include: ['./fixtures/**/*.(js|ts)'],
-  search: [/https:\/\/.*\.png(?=('|"))/],
+  include: ['./test/fixtures/**/*.(js|ts)'],
+  search: [/https?:\/\/.*\.png(?=('|"))/],
   minCompressRatio: 0,
   compress: compress,
   upload: upload,

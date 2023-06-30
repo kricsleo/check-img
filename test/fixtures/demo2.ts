@@ -1,3 +1,3 @@
-const img1 = 'http://example.com/1.png'
+const img1 = 'https://example.com/1.png'
 
-const img2 = "http://example.com/1.gif"
+const img2 = "https://example.com/1.gif"
